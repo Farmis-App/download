@@ -15,7 +15,7 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   font-size: 17px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -35,18 +35,17 @@ main {
 .logo {
   display: block;
   margin: 0 auto 12px;
-  border-radius: 20px;
+  border-radius: 12px;
 }
 
 h1 {
   margin: 0;
-  font-size: 40px;
-  letter-spacing: 0.5px;
+  font-size: 36px;
   color: var(--green);
 }
 
 .tagline {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 16px;
 }
@@ -62,23 +61,22 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 18px 20px;
-  min-height: 56px;
+  padding: 16px 20px;
   background: var(--green);
   color: #fff;
   text-decoration: none;
-  border-radius: 12px;
-  box-shadow: 0 2px 0 var(--green-dark);
+  border-radius: 10px;
   font-weight: 600;
+  transition: background 150ms ease;
 }
 
+.btn-primary:hover,
 .btn-primary:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 var(--green-dark);
+  background: var(--green-dark);
 }
 
 .btn-label {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .btn-meta {
@@ -96,7 +94,7 @@ h1 {
 .steps {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 20px;
   margin: 0 0 20px;
 }
@@ -115,27 +113,31 @@ h1 {
 .step-list li {
   display: flex;
   gap: 14px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-top: 1px solid var(--border);
 }
 
-.step-list li:first-child { border-top: 0; }
+.step-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
 
 .step-num {
-  flex: 0 0 32px;
-  height: 32px;
+  flex: 0 0 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--green);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .step-list h3 {
-  margin: 4px 0 4px;
-  font-size: 17px;
+  margin: 2px 0 4px;
+  font-size: 16px;
 }
 
 .step-list p {
@@ -148,7 +150,6 @@ h1 {
   padding: 12px;
   background: #fff8e1;
   border-left: 3px solid #f0b400;
-  border-radius: 4px;
   font-size: 15px;
   color: #5a4500;
 }
@@ -163,8 +164,8 @@ h1 {
   height: auto;
   background: #fff;
   padding: 8px;
-  border-radius: 8px;
   border: 1px solid var(--border);
+  border-radius: 6px;
 }
 
 .qr p {
@@ -178,10 +179,6 @@ footer {
   color: var(--muted);
   font-size: 14px;
   margin-top: 28px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-primary:active { transform: none; }
 }
 
 @media print {
