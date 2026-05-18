@@ -1,13 +1,13 @@
-# farmis-download
+# download
 
 Public landing page for distributing the FARMIS Android APK to farmers in Papua New Guinea.
 
-**Live URL:** https://glenhayoge.github.io/farmis-download/
+**Live URL:** https://farmis-app.github.io/download/
 
 The APK is hosted as a **GitHub Release asset**, not committed to this repo (it's 132 MB, over the 100 MB push limit). The download button on the landing page uses the evergreen redirect:
 
 ```
-https://github.com/glenhayoge/farmis-download/releases/latest/download/farmis.apk
+https://github.com/Farmis-App/download/releases/latest/download/farmis.apk
 ```
 
 ## Shipping a new version
