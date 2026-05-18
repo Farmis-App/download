@@ -12,14 +12,13 @@ https://github.com/Farmis-App/download/releases/latest/download/farmis.apk
 
 ## Shipping a new version
 
-1. Build the release APK and rename it to `farmis.apk` (same name every time — the evergreen URL depends on it):
-   ```
-   cd ../farmis-all/android && ./gradlew assembleRelease && cd ..
-   cp android/app/build/outputs/apk/release/app-release.apk /tmp/farmis.apk
-   ```
-2. Draft a new release: `gh release create vX.Y.Z /tmp/farmis.apk --title "FARMIS vX.Y.Z" --notes "..."` (leave "Set as latest release" enabled, which is the default).
-3. Edit `index.html`: update the `Version 0.1.0` line and the `132 MB` size if either changed. Commit and push.
-4. The download link in `index.html` does not need to change.
+Use the release script:
+
+```
+./scripts/release-apk.sh <version>
+```
+
+It bumps versions in `farmis-all/`, builds the APK, uploads it as a GitHub Release, and updates `index.html`. Full instructions, options, and troubleshooting are in [RELEASING.md](RELEASING.md).
 
 ## Tok Pisin
 
