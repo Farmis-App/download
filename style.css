@@ -245,7 +245,40 @@ footer {
   text-align: center;
   color: var(--muted);
   font-size: 14px;
-  margin-top: 28px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-bottom: 16px;
+}
+
+.footer-links a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.footer-tagline {
+  max-width: 480px;
+  margin: 0 auto 8px;
+}
+
+.footer-copy {
+  margin: 12px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 @media print {
