@@ -4,19 +4,19 @@
 # Usage:
 #   scripts/release-apk.sh <version> [--notes "..."] [--notes-file path] [--skip-build]
 #
-#   <version>     Semantic version, no leading "v" (e.g. 1.0.2)
+#   <version>     Semantic version, no leading "v" (e.g. 1.0.3)
 #   --notes       Inline release notes (default: auto-generated)
 #   --notes-file  Read release notes from a file
-#   --skip-build  Skip gradle build (use existing app-release.apk)
+#   --skip-build  Skip gradle build (use existing app-release.apk + .aab)
 #
 # Performs, in order:
-#   1. Sanity checks (gh auth, paths, tag uniqueness)
+#   1. Sanity checks (gh auth, paths, tag uniqueness, release signing configured)
 #   2. Bumps versionName in farmis-all/app.json, package.json, android build.gradle
 #   3. Increments android versionCode
-#   4. Builds the release APK via gradlew (unless --skip-build)
-#   5. Uploads as v<version> release on Farmis-App/download
+#   4. Builds APK (for Uptodown / direct download) and AAB (for Play) via gradlew
+#   5. Uploads APK as v<version> release on Farmis-App/download
 #   6. Updates index.html (version label + APK size)
-#   7. Prints commit/push commands for both repos
+#   7. Prints next-step commands (Play AAB, Uptodown APK, git push)
 
 set -euo pipefail
 
@@ -27,6 +27,7 @@ LANDING_REPO="$( cd "$SCRIPT_DIR/.." && pwd )"
 APP_REPO="$( cd "$LANDING_REPO/../farmis-all" && pwd )"
 ANDROID_DIR="$APP_REPO/android"
 APK_OUT="$ANDROID_DIR/app/build/outputs/apk/release/app-release.apk"
+AAB_OUT="$ANDROID_DIR/app/build/outputs/bundle/release/app-release.aab"
 INDEX="$LANDING_REPO/index.html"
 
 usage() {
@@ -123,20 +124,38 @@ with open(path, "w") as f:
     f.write("\n")
 PYEOF
 
-# --- Build APK ---
+# --- Signing pre-flight ---
+GRADLE_PROPS="${HOME}/.gradle/gradle.properties"
+SIGNING_OK=0
+if [[ -n "${FARMIS_UPLOAD_STORE_FILE:-}" ]]; then
+  SIGNING_OK=1
+elif [[ -f "$GRADLE_PROPS" ]] && grep -q '^FARMIS_UPLOAD_STORE_FILE=' "$GRADLE_PROPS"; then
+  SIGNING_OK=1
+fi
+if [[ $SIGNING_OK -eq 0 ]]; then
+  echo "Error: release signing not configured." >&2
+  echo "  Set FARMIS_UPLOAD_STORE_FILE (and the matching password/alias/key vars)" >&2
+  echo "  in $GRADLE_PROPS or your shell env. See RELEASING.md → 'One-time signing setup'." >&2
+  exit 1
+fi
+
+# --- Build APK + AAB ---
 if [[ $SKIP_BUILD -eq 0 ]]; then
-  echo "→ Building release APK (gradlew assembleRelease) — can take several minutes..."
-  ( cd "$ANDROID_DIR" && ./gradlew assembleRelease )
+  echo "→ Building release APK + AAB (gradlew assembleRelease bundleRelease) — can take several minutes..."
+  ( cd "$ANDROID_DIR" && ./gradlew assembleRelease bundleRelease )
 else
-  echo "→ Skipping build (--skip-build); using existing $APK_OUT"
+  echo "→ Skipping build (--skip-build); using existing artifacts"
 fi
 
 [[ -f "$APK_OUT" ]] || { echo "Error: $APK_OUT not found" >&2; exit 1; }
+[[ -f "$AAB_OUT" ]] || { echo "Error: $AAB_OUT not found" >&2; exit 1; }
 
 TMP_APK="/tmp/farmis.apk"
 cp "$APK_OUT" "$TMP_APK"
 APK_SIZE_MB=$(( $(stat -f%z "$TMP_APK") / 1024 / 1024 ))
+AAB_SIZE_MB=$(( $(stat -f%z "$AAB_OUT") / 1024 / 1024 ))
 echo "→ APK ready: $TMP_APK (${APK_SIZE_MB} MB)"
+echo "→ AAB ready: $AAB_OUT (${AAB_SIZE_MB} MB) — upload manually to Google Play Console"
 
 # --- Publish release ---
 echo "→ Creating release $TAG on $REPO"
@@ -157,6 +176,16 @@ cat <<EOF
 ✓ Release $TAG published
   https://github.com/$REPO/releases/tag/$TAG
   Evergreen URL: https://github.com/$REPO/releases/latest/download/farmis.apk
+
+Next steps for store distribution:
+
+  • Google Play Console — upload the AAB:
+      $AAB_OUT
+    (Internal testing → closed testing → production. See RELEASING.md.)
+
+  • Uptodown — upload the APK:
+      $APK_OUT  (or the GitHub release asset)
+    https://en.uptodown.com/android/developers
 
 Commit & push the version bumps and landing page changes:
 
