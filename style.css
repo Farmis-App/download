@@ -53,6 +53,22 @@ h1 {
   font-size: 16px;
 }
 
+.banner {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  background: #fff8e1;
+  border: 1px solid #f0b400;
+  border-left-width: 4px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #5a4500;
+}
+
+.banner strong {
+  color: #4a3700;
+}
+
 .download {
   margin: 28px 0 32px;
   text-align: center;
@@ -287,6 +303,7 @@ footer {
   .download,
   .note,
   .share,
+  .banner,
   footer {
     display: none;
   }

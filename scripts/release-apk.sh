@@ -86,6 +86,21 @@ echo "→ Preparing FARMIS $TAG"
 echo "  App repo:     $APP_REPO"
 echo "  Landing repo: $LANDING_REPO"
 
+# --- Signing pre-flight (run BEFORE version bumps so a fail doesn't dirty the repo) ---
+GRADLE_PROPS="${HOME}/.gradle/gradle.properties"
+SIGNING_OK=0
+if [[ -n "${FARMIS_UPLOAD_STORE_FILE:-}" ]]; then
+  SIGNING_OK=1
+elif [[ -f "$GRADLE_PROPS" ]] && grep -qE '^[[:space:]]*FARMIS_UPLOAD_STORE_FILE=' "$GRADLE_PROPS"; then
+  SIGNING_OK=1
+fi
+if [[ $SIGNING_OK -eq 0 ]]; then
+  echo "Error: release signing not configured." >&2
+  echo "  Set FARMIS_UPLOAD_STORE_FILE (and the matching password/alias/key vars)" >&2
+  echo "  in $GRADLE_PROPS or your shell env. See RELEASING.md → 'One-time signing setup'." >&2
+  exit 1
+fi
+
 # --- Bump versions ---
 CURRENT_VERSION_CODE=$(grep -E '^\s*versionCode\s+[0-9]+' "$ANDROID_DIR/app/build.gradle" | awk '{print $2}' | head -1)
 NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
@@ -124,25 +139,12 @@ with open(path, "w") as f:
     f.write("\n")
 PYEOF
 
-# --- Signing pre-flight ---
-GRADLE_PROPS="${HOME}/.gradle/gradle.properties"
-SIGNING_OK=0
-if [[ -n "${FARMIS_UPLOAD_STORE_FILE:-}" ]]; then
-  SIGNING_OK=1
-elif [[ -f "$GRADLE_PROPS" ]] && grep -q '^FARMIS_UPLOAD_STORE_FILE=' "$GRADLE_PROPS"; then
-  SIGNING_OK=1
-fi
-if [[ $SIGNING_OK -eq 0 ]]; then
-  echo "Error: release signing not configured." >&2
-  echo "  Set FARMIS_UPLOAD_STORE_FILE (and the matching password/alias/key vars)" >&2
-  echo "  in $GRADLE_PROPS or your shell env. See RELEASING.md → 'One-time signing setup'." >&2
-  exit 1
-fi
-
 # --- Build APK + AAB ---
+# SENTRY_DISABLE_AUTO_UPLOAD=true skips source-map upload (no auth token configured).
+# To enable Sentry uploads, set SENTRY_AUTH_TOKEN in your env and unset this var.
 if [[ $SKIP_BUILD -eq 0 ]]; then
   echo "→ Building release APK + AAB (gradlew assembleRelease bundleRelease) — can take several minutes..."
-  ( cd "$ANDROID_DIR" && ./gradlew assembleRelease bundleRelease )
+  ( cd "$ANDROID_DIR" && SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease bundleRelease )
 else
   echo "→ Skipping build (--skip-build); using existing artifacts"
 fi
