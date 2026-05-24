@@ -111,6 +111,10 @@ echo "→ Bumping versionName → $VERSION, versionCode $CURRENT_VERSION_CODE �
 sed -i '' -E "s/(versionName[[:space:]]+)\"[^\"]+\"/\1\"$VERSION\"/" "$ANDROID_DIR/app/build.gradle"
 sed -i '' -E "s/(versionCode[[:space:]]+)[0-9]+/\1$NEW_VERSION_CODE/" "$ANDROID_DIR/app/build.gradle"
 
+# In-app Settings screen — keep APP_VERSION constant in sync
+APP_INFO="$APP_REPO/app/settings/app-info.tsx"
+[[ -f "$APP_INFO" ]] && sed -i '' -E "s/(const APP_VERSION = ')[^']+(';)/\1$VERSION\2/" "$APP_INFO"
+
 # app.json + package.json (JSON-safe edits via python)
 python3 - "$APP_REPO/app.json" "$VERSION" <<'PYEOF'
 import json, sys
@@ -192,7 +196,7 @@ Next steps for store distribution:
 Commit & push the version bumps and landing page changes:
 
   # app repo
-  git -C "$APP_REPO" add app.json package.json android/app/build.gradle
+  git -C "$APP_REPO" add app.json package.json android/app/build.gradle app/settings/app-info.tsx
   git -C "$APP_REPO" commit -m "chore: bump to v$VERSION"
   git -C "$APP_REPO" push
 
