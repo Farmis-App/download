@@ -146,9 +146,14 @@ PYEOF
 # --- Build APK + AAB ---
 # SENTRY_DISABLE_AUTO_UPLOAD=true skips source-map upload (no auth token configured).
 # To enable Sentry uploads, set SENTRY_AUTH_TOKEN in your env and unset this var.
+# TMPDIR override isolates Metro's FileStore cache to a fresh dir per build.
+# The RN gradle plugin hardcodes --reset-cache, which races with concurrent
+# writes on Node 22+ and fails with ENOTEMPTY in the shared OS tmp metro-cache.
 if [[ $SKIP_BUILD -eq 0 ]]; then
   echo "→ Building release APK + AAB (gradlew assembleRelease bundleRelease) — can take several minutes..."
-  ( cd "$ANDROID_DIR" && SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease bundleRelease )
+  BUILD_TMPDIR="$(mktemp -d -t farmis-build-XXXXXX)"
+  trap 'rm -rf "$BUILD_TMPDIR"' EXIT
+  ( cd "$ANDROID_DIR" && env TMPDIR="$BUILD_TMPDIR" SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease bundleRelease )
 else
   echo "→ Skipping build (--skip-build); using existing artifacts"
 fi
