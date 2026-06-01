@@ -176,9 +176,31 @@ gh release create "$TAG" "$TMP_APK" \
   --notes "$NOTES"
 
 # --- Update landing page ---
-echo "→ Updating $INDEX (version label + APK size)"
-sed -i '' -E "s|<p class=\"version\">Version [0-9]+\.[0-9]+\.[0-9]+</p>|<p class=\"version\">Version $VERSION</p>|" "$INDEX"
-sed -i '' -E "s|>[0-9]+ MB &middot; Android only<|>${APK_SIZE_MB} MB \&middot; Android only<|" "$INDEX"
+# The download button shows a single meta line:
+#   <span class="btn-meta">APK &middot; NN MB &middot; vX.Y.Z</span>
+# Patterns tolerate arbitrary whitespace around the &middot; separators so a
+# minor markup tweak won't silently break the auto-update.
+echo "→ Updating $INDEX (APK size + version in btn-meta)"
+SIZE_RE='(class="btn-meta">APK[[:space:]]*&middot;[[:space:]]*)[0-9]+([[:space:]]*MB)'
+VERSION_RE='(MB[[:space:]]*&middot;[[:space:]]*v)[0-9]+\.[0-9]+\.[0-9]+'
+
+# Fail loudly if the expected markup is gone (e.g. another landing-page redesign),
+# rather than silently skipping the update like the pre-redesign patterns did.
+grep -Eq "$SIZE_RE" "$INDEX" || {
+  echo "Error: APK-size pattern not found in $INDEX — btn-meta markup changed? Update release-apk.sh." >&2
+  exit 1
+}
+grep -Eq "$VERSION_RE" "$INDEX" || {
+  echo "Error: version pattern not found in $INDEX — btn-meta markup changed? Update release-apk.sh." >&2
+  exit 1
+}
+
+sed -i '' -E "s|$SIZE_RE|\1${APK_SIZE_MB}\2|" "$INDEX"
+sed -i '' -E "s|$VERSION_RE|\1$VERSION|" "$INDEX"
+
+# Confirm both values actually landed in the same line.
+grep -Eq "class=\"btn-meta\">APK[[:space:]]*&middot;[[:space:]]*${APK_SIZE_MB}[[:space:]]*MB[[:space:]]*&middot;[[:space:]]*v${VERSION}<" "$INDEX" \
+  || echo "Warning: btn-meta not updated as expected (want: APK &middot; ${APK_SIZE_MB} MB &middot; v${VERSION}) — check $INDEX" >&2
 
 rm -f "$TMP_APK"
 
